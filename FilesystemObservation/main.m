@@ -7,6 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TLKMailManager.h"
+#import "TLKObservationManager.h"
 
 int main(int argc, const char * argv[])
 {
@@ -14,7 +16,8 @@ int main(int argc, const char * argv[])
     @autoreleasepool {
         
         // insert code here...
-        NSLog(@"Hello, World!");
+        [[TLKObservationManager sharedManager] attachListener];
+
         
     }
     return 0;
