@@ -10,6 +10,12 @@
 #import "TLKConfiguration.h"
 #import <MailCore/MailCore.h>
 
+@interface TLKMailManager ()
+
+@property (nonatomic, strong) id mailSession;
+
+@end
+
 
 @implementation TLKMailManager
 
@@ -34,29 +40,29 @@ static id _sharedManager;
     return nil;
 }
 
-- (void)sendMail
+- (void)sendMailWithBody:(NSString *)body
 {
-    MCOSMTPSession *smtpSession = [[MCOSMTPSession alloc] init];
-    smtpSession.hostname = @"smtp.gmail.com";
-    smtpSession.port = 465;
-    smtpSession.username = @"sdfsdf@gmail.com";
-    smtpSession.password = @"sdfsfsdf";
-    smtpSession.authType = MCOAuthTypeSASLPlain;
-    smtpSession.connectionType = MCOConnectionTypeTLS;
+    [self setupSMTPSession];
     
     MCOMessageBuilder *builder = [[MCOMessageBuilder alloc] init];
-    MCOAddress *from = [MCOAddress addressWithDisplayName:@"Emil Marashliev"
-                                                  mailbox:@"marashliev@gmail.com"];
-    MCOAddress *to = [MCOAddress addressWithDisplayName:nil
-                                                mailbox:@"emil.marashliev@telerik.com"];
+    MCOAddress *from = [MCOAddress addressWithDisplayName:nil
+                                                  mailbox:[TLKConfiguration sharedConfiguration].config[@"email"][@"from"]];
+    
+    NSMutableArray *toArray = [[NSMutableArray alloc] init];
+    NSArray *toRawArray = [TLKConfiguration sharedConfiguration].config[@"email"][@"to"];
+    [toRawArray enumerateObjectsUsingBlock:^(NSString *email, NSUInteger idx, BOOL *stop) {
+        [toArray addObject:[MCOAddress addressWithDisplayName:nil
+                                                      mailbox:email]];
+    }];
+    
+    
     [[builder header] setFrom:from];
-    [[builder header] setTo:@[to]];
-    [[builder header] setSubject:@"My message"];
-    [builder setHTMLBody:@"This is a test message!"];
+    [[builder header] setTo:toArray];
+    [[builder header] setSubject:[TLKConfiguration sharedConfiguration].config[@"email"][@"subject"]];
+    [builder setHTMLBody:body];
     NSData * rfc822Data = [builder data];
     
-    MCOSMTPSendOperation *sendOperation =
-    [smtpSession sendOperationWithData:rfc822Data];
+    MCOSMTPSendOperation *sendOperation = [self.mailSession sendOperationWithData:rfc822Data];
     [sendOperation start:^(NSError *error) {
         if(error) {
             NSLog(@"Error sending email: %@", error);
@@ -64,6 +70,18 @@ static id _sharedManager;
             NSLog(@"Successfully sent email!");
         }
     }];
+}
+
+- (void)setupSMTPSession
+{
+    MCOSMTPSession *smtpSession = [[MCOSMTPSession alloc] init];
+    smtpSession.hostname = [TLKConfiguration sharedConfiguration].config[@"emailServer"][@"hostname"];
+    smtpSession.port = [[TLKConfiguration sharedConfiguration].config[@"emailServer"][@"port"] intValue];
+    smtpSession.username = [TLKConfiguration sharedConfiguration].config[@"emailServer"][@"username"];
+    smtpSession.password = [TLKConfiguration sharedConfiguration].config[@"emailServer"][@"password"];
+    smtpSession.authType = MCOAuthTypeSASLPlain;
+    smtpSession.connectionType = MCOConnectionTypeTLS;
+    self.mailSession = smtpSession;
 }
 
 @end

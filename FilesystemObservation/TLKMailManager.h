@@ -12,6 +12,6 @@
 
 + (instancetype)sharedManager;
 
-- (void)sendMail;
+- (void)sendMailWithBody:(NSString *)body;
 
 @end

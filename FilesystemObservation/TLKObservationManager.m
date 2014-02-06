@@ -8,6 +8,7 @@
 
 #import "TLKObservationManager.h"
 #import "TLKConfiguration.h"
+#import "TLKMailManager.h"
 #import <CoreServices/CoreServices.h>
 
 
@@ -74,7 +75,7 @@ static id _sharedManager;
 
 CFStringRef eventTypeForFlag(const FSEventStreamEventFlags eventFlag)
 {
-    NSMutableArray * array = [ NSMutableArray array ] ;
+    NSMutableArray * array = [NSMutableArray array] ;
     const char * flags[] = {
         "MustScanSubDirs",
         "UserDropped",
@@ -102,7 +103,7 @@ CFStringRef eventTypeForFlag(const FSEventStreamEventFlags eventFlag)
     long bit = 1 ;
     for( int index=0, count = sizeof( flags ) / sizeof( flags[0]); index < count; ++index ) {
         if ( ( eventFlag & bit ) != 0 ) {
-            [array addObject:[NSString stringWithUTF8String:flags[ index ]]] ;
+            [array addObject:[NSString stringWithUTF8String:flags[index]]] ;
         }
         bit <<= 1 ;
     }
@@ -121,21 +122,23 @@ void callbackFunction( ConstFSEventStreamRef streamRef,
 {
     int i;
     char **paths = eventPaths;
-    
+    NSMutableString *eventsString = [[NSMutableString alloc] init];
     for (i=0; i<numEvents; i++) {
         /* flags are unsigned long, IDs are uint64_t */
         CFStringRef eventStr = eventTypeForFlag(eventFlags[i]);
-        CFIndex length = CFStringGetLength(eventStr);
-        CFIndex maxSize =
-        CFStringGetMaximumSizeForEncoding(length,
-                                          kCFStringEncodingUTF8);
-        char *event = (char *)malloc(maxSize);
-
-        CFStringGetCString(eventStr, event, maxSize,
-                           kCFStringEncodingUTF8);
-        printf("Change %llu in %s,  %s\n", eventIds[i], paths[i], event);
+//        CFIndex length = CFStringGetLength(eventStr);
+//        CFIndex maxSize =
+//        CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8);
+//        char *event = (char *)malloc(maxSize);
+//
+//        CFStringGetCString(eventStr, event, maxSize,
+//                           kCFStringEncodingUTF8);
+//        printf("Change %llu in %s,  %s\n", eventIds[i], paths[i], event);
+        [eventsString appendFormat:@"Change %llu in %s,  %@  <br />\n", eventIds[i], paths[i], (__bridge NSString *)eventStr ];
     }
-
+    
+    [[TLKMailManager sharedManager] sendMailWithBody:eventsString];
+    NSLog(@"%@", eventsString);
     
     
 }

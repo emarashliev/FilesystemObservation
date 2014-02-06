@@ -1,0 +1,23 @@
+{
+    "pathsToWatch" : [
+        "/path/to/watch/",
+        "/another/path/to/watch/"
+    ],
+    "emailServer" : {
+        "hostname" : "smtp.gmail.com",
+        "port" : 465,
+        "username" : "you@gmail.com",
+        "password" : "password"
+    },
+    "email" : {
+        "from" : "from@gmail.com",
+        "to" : [
+            "to@gmail.com",
+            "to2@gmail.com"
+        ],
+        "subject" : "Your Subject"
+    },
+    "otherConfigurations" : {
+        "latencyInSeconds" : 30
+    }
+}
